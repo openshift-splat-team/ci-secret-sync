@@ -1,6 +1,6 @@
 # ci-secret-sync
 
-Periodically checks a secret for an update. If the secret is updated, targets are updated to reflect the update.  Optionally, pods associated with a daemonset are updated.
+Periodically checks a secret for an update. If the secret is updated, targets are updated to reflect the update.  Optionally, pods associated with a daemonset or deployment are updated.
 Actions are documented in a file in the working directory named `sync.yaml`. 
 
 sample: 

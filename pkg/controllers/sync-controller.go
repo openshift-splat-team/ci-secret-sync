@@ -87,10 +87,17 @@ func (s *SyncController) Reconcile() (ctrl.Result, error) {
 				if target.Type == "daemonset" {
 					err = utils.RolloutDaemonset(s.Context, s.Logger, s.Client, &target)
 					if err != nil {
-						s.Logger.Error(err, fmt.Sprintf("unable to roll out data set %s. %v", target.Name, err))
-						return ctrl.Result{}, fmt.Errorf("unable to roll out data set %s. %v", target.Name, err)
+						s.Logger.Error(err, fmt.Sprintf("unable to roll out daemonset %s. %v", target.Name, err))
+						return ctrl.Result{}, fmt.Errorf("unable to roll out daemonset %s. %v", target.Name, err)
+					}
+				} else if target.Type == "deployment" {
+					err = utils.RolloutDeployment(s.Context, s.Logger, s.Client, &target)
+					if err != nil {
+						s.Logger.Error(err, fmt.Sprintf("unable to roll out deployment %s. %v", target.Name, err))
+						return ctrl.Result{}, fmt.Errorf("unable to roll out deployment %s. %v", target.Name, err)
 					}
 				}
+
 			}
 		}
 	}

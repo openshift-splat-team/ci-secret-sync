@@ -82,38 +82,90 @@ func RolloutDaemonset(ctx context.Context,
 			return fmt.Errorf("no labels found. can't proceed")
 		}
 
-		associatedPods := corev1.PodList{
-			TypeMeta: metav1.TypeMeta{},
+		err = DeletePodsInList(ctx, log, k8sclient, labels, target.Namespace)
+		if err != nil {
+			log.Error(err, fmt.Sprintf("unable to delete pods associated with %s", target.Name))
+			return fmt.Errorf("unable to delete pods associated with %s, %v", target.Name, err)
+		}
+	} else {
+		return fmt.Errorf("target %s is not a daemonset", target.Name)
+	}
+	return nil
+}
+
+func RolloutDeployment(ctx context.Context,
+	log logr.Logger,
+	k8sclient client.Client,
+	target *data.SyncItemTarget) error {
+
+	namespacedName := types.NamespacedName{
+		Namespace: target.Namespace,
+		Name:      target.Name,
+	}
+	if target.Type == "deployment" {
+		targetDeployment := appsv1.Deployment{}
+		err := k8sclient.Get(ctx, namespacedName, &targetDeployment)
+		if err != nil {
+			log.Error(err, fmt.Sprintf("unable to get deployment %s", target.Key))
+			return fmt.Errorf("unable to get deployment %s, %v", target.Key, err)
 		}
 
-		for k, v := range labels {
-			err = k8sclient.List(ctx, &associatedPods, []client.ListOption{
-				client.InNamespace(target.Namespace),
-				client.MatchingLabels{k: v},
-			}...)
-			if err != nil {
-				log.Error(err, fmt.Sprintf("unable to get pods %s", target.Key))
-				return fmt.Errorf("unable to get pods %s, %v", target.Key, err)
-			}
-
-			if associatedPods.Items != nil {
-				break
-			}
+		labels := targetDeployment.Spec.Template.ObjectMeta.Labels
+		if len(labels) == 0 {
+			log.Info("no labels found. can't proceed")
+			return fmt.Errorf("no labels found. can't proceed")
 		}
 
-		if associatedPods.Items == nil {
-			log.Error(err, fmt.Sprintf("no pods found for %s. unable to restart", target.Key))
-			return fmt.Errorf("unable to get pods %s. unable to restart", target.Key)
+		err = DeletePodsInList(ctx, log, k8sclient, labels, target.Namespace)
+		if err != nil {
+			log.Error(err, fmt.Sprintf("unable to delete pods associated with %s", target.Name))
+			return fmt.Errorf("unable to delete pods associated with %s, %v", target.Name, err)
+		}
+	} else {
+		return fmt.Errorf("target %s is not a deployment", target.Name)
+	}
+	return nil
+}
+
+func DeletePodsInList(
+	ctx context.Context,
+	log logr.Logger,
+	k8sclient client.Client,
+	labels map[string]string,
+	namespace string,
+) error {
+	associatedPods := corev1.PodList{
+		TypeMeta: metav1.TypeMeta{},
+	}
+
+	for k, v := range labels {
+		err := k8sclient.List(ctx, &associatedPods, []client.ListOption{
+			client.InNamespace(namespace),
+			client.MatchingLabels{k: v},
+		}...)
+		if err != nil {
+			log.Error(err, "unable to get pods")
+			return fmt.Errorf("unable to get pods %v", err)
 		}
 
-		for _, pod := range associatedPods.Items {
-			log.Info(fmt.Sprintf("deleting pod %s", pod.Name))
-			err = k8sclient.Delete(ctx, &pod)
-			if err != nil {
-				log.Error(err, fmt.Sprintf("unable to delete pod %s", pod.Name))
-				return fmt.Errorf("unable to delete pod %s, %v", pod.Name, err)
-			}
+		if associatedPods.Items != nil {
+			break
 		}
 	}
+
+	if associatedPods.Items == nil {
+		log.Info("no pods found for. unable to restart")
+		return fmt.Errorf("no pods found for. unable to restart")
+	}
+
+	for _, pod := range associatedPods.Items {
+		log.Info(fmt.Sprintf("deleting pod %s", pod.Name))
+		err := k8sclient.Delete(ctx, &pod)
+		if err != nil {
+			log.Error(err, fmt.Sprintf("unable to delete pod %s", pod.Name))
+			return fmt.Errorf("unable to delete pod %s, %v", pod.Name, err)
+		}
+	}
+
 	return nil
 }
