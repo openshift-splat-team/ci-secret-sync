@@ -21,19 +21,14 @@ func StartControllers() {
 	scheme := runtime.NewScheme()
 	setupLog := ctrl.Log.WithName("setup")
 
-	var metricsAddr string
-	var namespace string
-	var enableLeaderElection bool
 	var probeAddr string
+	var configPath string
 	var config utils.Config
 	ctx := context.TODO()
 
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&namespace, "namespace", "vsphere-infra-helpers", "The namespace where ")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
-		"Enable leader election for controller manager. "+
-			"Enabling this will ensure there is only one active controller manager.")
+	flag.StringVar(&configPath, "config-path", "/config/sync.yaml", "Path to the configuration.")
+
 	opts := zap.Options{
 		Development: true,
 	}
@@ -41,6 +36,12 @@ func StartControllers() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	err := utils.LoadConfig(configPath)
+	if err != nil {
+		setupLog.Error(err, "unable to load configuration")
+		os.Exit(1)
+	}
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
@@ -73,14 +74,10 @@ func StartControllers() {
 
 	sync.SetupWithManager(mgr)
 
-	// for {
-	// 	time.Sleep(10 * time.Second)
-	// }
-
 	mgr.Start(ctx)
 }
 
 func main() {
-	fmt.Printf("Starting application...")
+	fmt.Printf("starting ci-secret-sync controller")
 	StartControllers()
 }

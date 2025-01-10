@@ -17,16 +17,22 @@ var (
 )
 
 func init() {
-	rawYaml, err := os.ReadFile("sync.yaml")
+
+}
+
+func LoadConfig(path string) error {
+	rawYaml, err := os.ReadFile(path)
 	if err != nil {
-		log.Fatalf("Error reading file: %v", err)
+		log.Fatalf("error reading config file: %v", err)
+		return fmt.Errorf("error reading config file: %v", err)
 	}
 
 	err = yaml.Unmarshal([]byte(rawYaml), &_config)
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		fmt.Println("error unmarshalling config file:", err)
+		return fmt.Errorf("error unmarshalling config file: %v", err)
 	}
+	return nil
 }
 
 func (c *Config) Get() *data.SyncConfig {
