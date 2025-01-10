@@ -11,17 +11,27 @@ sync:
       name: "pull-secret"
       namespace: "openshift-config"
       key: ".dockerconfigjson"
-      type: "ON_CHANGE"
+      type: "secret"
+      schema: "REGISTRY"
+      repository:
+        registry: "quay.io"
     targets:
     - type: secret
       name: cache-secret
       namespace: vsphere-infra-helpers
       key: "the-key"
       action: "UPDATE_FIELD"
-    - type: daemonset
-      name: cache
+      sourceFieldIndex: 0
+    - type: secret
+      name: cache-secret
+      namespace: vsphere-infra-helpers
+      key: "the-key2"
+      action: "UPDATE_FIELD"
+      sourceFieldIndex: 1
+    - type: deployment
+      name: machine
       #namespace: vsphere-infra-helpers
-      namespace: openshift-dns
-      name: dns-default
+      namespace: openshift-machine-api
+      name: machine-api-operator
       action: "REDEPLOY_PODS"
 ```
