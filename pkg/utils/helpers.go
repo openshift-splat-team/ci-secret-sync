@@ -48,7 +48,9 @@ func UpdateSecretKey(
 		}
 	}
 
-	if update {
+	if _config.DryRun {
+		log.Info("dry run, not updating. set --dry-run=true to apply changes")
+	} else if update {
 		err = client.Update(ctx, targetSecret)
 		if err != nil {
 			log.Error(err, fmt.Sprintf("unable to update key %s in %s", target.Key, target.Name))
@@ -68,6 +70,12 @@ func RolloutDaemonset(ctx context.Context,
 		Namespace: target.Namespace,
 		Name:      target.Name,
 	}
+
+	if _config.DryRun {
+		log.Info("dry run, not rolling out daemonset. set --dry-run=true to apply changes")
+		return nil
+	}
+
 	if target.Type == "daemonset" {
 		targetDaemonset := appsv1.DaemonSet{}
 		err := k8sclient.Get(ctx, namespacedName, &targetDaemonset)
@@ -102,6 +110,12 @@ func RolloutDeployment(ctx context.Context,
 		Namespace: target.Namespace,
 		Name:      target.Name,
 	}
+
+	if _config.DryRun {
+		log.Info("dry run, not rolling out deployment. set --dry-run=true to apply changes")
+		return nil
+	}
+
 	if target.Type == "deployment" {
 		targetDeployment := appsv1.Deployment{}
 		err := k8sclient.Get(ctx, namespacedName, &targetDeployment)

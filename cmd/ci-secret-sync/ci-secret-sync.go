@@ -23,11 +23,13 @@ func StartControllers() {
 
 	var probeAddr string
 	var configPath string
+	var dryRun bool
 	var config utils.Config
 	ctx := context.TODO()
 
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&configPath, "config-path", "/config/sync.yaml", "Path to the configuration.")
+	flag.BoolVar(&dryRun, "dry-run", true, "By default, changes are not applied. set --dry-run=false to apply changes")
 
 	opts := zap.Options{
 		Development: true,
@@ -42,6 +44,8 @@ func StartControllers() {
 		setupLog.Error(err, "unable to load configuration")
 		os.Exit(1)
 	}
+
+	utils.SetDryRun(dryRun)
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,

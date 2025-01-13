@@ -20,6 +20,10 @@ func init() {
 
 }
 
+func SetDryRun(d bool) {
+	_config.DryRun = d
+}
+
 func LoadConfig(path string) error {
 	rawYaml, err := os.ReadFile(path)
 	if err != nil {

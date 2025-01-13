@@ -25,8 +25,8 @@ type SyncController struct {
 func (s *SyncController) SetupWithManager(mgr ctrl.Manager) error {
 	// Define the interval
 	interval := 300 * time.Second
-	if s.Config.RefreshPeriodSeconds != 0 {
-		interval = time.Duration(s.Config.RefreshPeriodSeconds) * time.Second
+	if s.Config.Sync.RefreshPeriodSeconds != 0 {
+		interval = time.Duration(s.Config.Sync.RefreshPeriodSeconds) * time.Second
 	}
 
 	s.Logger.Info(fmt.Sprintf("refresh period %d seconds", time.Duration(interval)/time.Second))

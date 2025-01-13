@@ -40,10 +40,11 @@ type SyncTriggerAction struct {
 }
 
 type SyncActions struct {
-	Actions []SyncTriggerAction `yaml:"actions"`
+	RefreshPeriodSeconds int64               `yaml:"refreshPeriodSeconds"`
+	Actions              []SyncTriggerAction `yaml:"actions"`
 }
 
 type SyncConfig struct {
-	Sync                 SyncActions `yaml:"sync"`
-	RefreshPeriodSeconds int64       `yaml:"refreshPeriodSeconds"`
+	Sync   SyncActions `yaml:"sync"`
+	DryRun bool
 }
