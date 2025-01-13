@@ -24,15 +24,17 @@ type SyncController struct {
 
 func (s *SyncController) SetupWithManager(mgr ctrl.Manager) error {
 	// Define the interval
-	interval := 3 * time.Second
+	interval := 300 * time.Second
+	if s.Config.RefreshPeriodSeconds != 0 {
+		interval = time.Duration(s.Config.RefreshPeriodSeconds) * time.Second
+	}
 
-	// Create a new ticker
+	s.Logger.Info(fmt.Sprintf("refresh period %d seconds", time.Duration(interval)/time.Second))
+
+	// setup a periodic callback
 	ticker := time.NewTicker(interval)
-
-	// Create a channel to signal the end of the program (optional)
 	done := make(chan bool)
 
-	// Start a goroutine that executes periodically
 	go func() {
 		for {
 			select {
@@ -117,6 +119,7 @@ func (s *SyncController) Reconcile() (ctrl.Result, error) {
 		}
 
 		if update {
+			s.Logger.Info(fmt.Sprintf("update detected in %s and has been mirrored, will roll out pods", action.Source.Name))
 			for _, target := range action.Targets {
 				if target.Type == "daemonset" {
 					err = utils.RolloutDaemonset(s.Context, s.Logger, s.Client, &target)

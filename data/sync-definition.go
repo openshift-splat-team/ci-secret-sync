@@ -44,5 +44,6 @@ type SyncActions struct {
 }
 
 type SyncConfig struct {
-	Sync SyncActions `yaml:"sync"`
+	Sync                 SyncActions `yaml:"sync"`
+	RefreshPeriodSeconds int64       `yaml:"refreshPeriodSeconds"`
 }
